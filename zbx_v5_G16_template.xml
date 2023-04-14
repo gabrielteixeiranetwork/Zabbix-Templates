@@ -1,0 +1,386 @@
+zabbix_export:
+  version: '5.2'
+  date: '2021-06-17T16:59:06Z'
+  groups:
+    -
+      name: Templates/Intelbras
+  templates:
+    -
+      template: G16_SNMP
+      name: G16_SNMP
+      description: 'Template OLTG16 - Unidade Redes Fibra Optica'
+      groups:
+        -
+          name: Templates/Intelbras
+      applications:
+        -
+          name: 'Device Info'
+      items:
+        -
+          name: 'CPU Load'
+          type: SNMP_AGENT
+          snmp_oid: iso.3.6.1.4.1.13464.1.14.2.1.3.1.0
+          key: CPULoad
+          history: 30d
+          trends: 90d
+          units: '%'
+          applications:
+            -
+              name: 'Device Info'
+          triggers:
+            -
+              expression: '{avg(10m)}>{$CPU_BUSY}'
+              name: 'CPU Busy'
+              priority: HIGH
+              manual_close: 'YES'
+        -
+          name: 'GPON Chipset Temp'
+          type: SNMP_AGENT
+          snmp_oid: iso.3.6.1.4.1.13464.1.14.2.1.3.4.0
+          key: GPONChipsetTemp
+          delay: 5m
+          history: 30d
+          trends: 90d
+          units: °C
+          applications:
+            -
+              name: 'Device Info'
+        -
+          name: 'Memory Load'
+          type: SNMP_AGENT
+          snmp_oid: iso.3.6.1.4.1.13464.1.14.2.1.3.2.0
+          key: MemoryLoad
+          history: 30d
+          trends: 90d
+          units: '%'
+          applications:
+            -
+              name: 'Device Info'
+          triggers:
+            -
+              expression: '{avg(10m)}>{$OUT_MEMORY}'
+              name: 'Running out of memory'
+              priority: HIGH
+              manual_close: 'YES'
+        -
+          name: 'Switch Chipset Temp'
+          type: SNMP_AGENT
+          snmp_oid: iso.3.6.1.4.1.13464.1.14.2.1.3.3.0
+          key: SwitchChipsetTemp
+          delay: 5m
+          history: 30d
+          trends: 90d
+          units: °C
+          applications:
+            -
+              name: 'Device Info'
+      discovery_rules:
+        -
+          name: 'ONU Status'
+          type: SNMP_AGENT
+          snmp_oid: 'discovery[{#PON},1.3.6.1.4.1.13464.1.14.2.4.1.1.1.2,{#ID},1.3.6.1.4.1.13464.1.14.2.4.1.1.1.3]'
+          key: ONUsRUNGPON
+          delay: 1h
+          lifetime: 1d
+          item_prototypes:
+            -
+              name: 'Model GPON {#PON} ONU {#ID}'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.13464.1.14.2.4.1.1.1.5.0.{#PON}.{#ID}'
+              key: 'Model[{#PON}{#ID}]'
+              delay: 10m
+              history: 7d
+              trends: '0'
+              value_type: TEXT
+              application_prototypes:
+                -
+                  name: 'GPON {#PON} - ONU {#ID}'
+            -
+              name: 'GPON {#PON} ONU {#ID}'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.13464.1.14.2.4.1.1.1.6.0.{#PON}.{#ID}'
+              key: 'ONU[{#PON}{#ID}]'
+              history: 30d
+              trends: 90d
+              application_prototypes:
+                -
+                  name: 'GPON {#PON} - ONU {#ID}'
+              trigger_prototypes:
+                -
+                  expression: '{count(#10,0)}=10'
+                  name: 'GPON {#PON} ONU {#ID} DOWN'
+                  priority: WARNING
+                  manual_close: 'YES'
+            -
+              name: 'Downstream GPON {#PON} ONU {#ID}'
+              type: SNMP_AGENT
+              snmp_oid: 'iso.3.6.1.4.1.13464.1.14.2.4.1.7.1.7.0.{#PON}.{#ID}'
+              key: 'RXBytesGPONONU[{#PON}{#ID}]'
+              delay: 30s
+              history: 5d
+              trends: 90d
+              units: bps
+              application_prototypes:
+                -
+                  name: 'GPON {#PON} - ONU {#ID}'
+              preprocessing:
+                -
+                  type: MULTIPLIER
+                  parameters:
+                    - '8'
+                -
+                  type: CHANGE_PER_SECOND
+                  parameters:
+                    - ''
+            -
+              name: 'RX GPON {#PON} ONU {#ID}'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.13464.1.14.2.4.1.9.1.5.0.{#PON}.{#ID}'
+              key: 'RX[{#PON}{#ID}]'
+              delay: 10m
+              history: 30d
+              trends: 90d
+              value_type: FLOAT
+              application_prototypes:
+                -
+                  name: 'GPON {#PON} - ONU {#ID}'
+            -
+              name: 'SN GPON {#PON} ONU {#ID}'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.13464.1.14.2.4.1.1.1.8.0.{#PON}.{#ID}'
+              key: 'SN[{#PON}{#ID}]'
+              delay: 10m
+              history: 7d
+              trends: '0'
+              value_type: TEXT
+              application_prototypes:
+                -
+                  name: 'GPON {#PON} - ONU {#ID}'
+            -
+              name: 'Upstream GPON {#PON} ONU {#ID}'
+              type: SNMP_AGENT
+              snmp_oid: 'iso.3.6.1.4.1.13464.1.14.2.4.1.7.1.5.0.{#PON}.{#ID}'
+              key: 'TXBytesGPONONU[{#PON}{#ID}]'
+              delay: 30s
+              history: 5d
+              trends: 90d
+              units: bps
+              application_prototypes:
+                -
+                  name: 'GPON {#PON} - ONU {#ID}'
+              preprocessing:
+                -
+                  type: MULTIPLIER
+                  parameters:
+                    - '8'
+                -
+                  type: CHANGE_PER_SECOND
+                  parameters:
+                    - ''
+            -
+              name: 'TX GPON {#PON} ONU {#ID}'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.13464.1.14.2.4.1.9.1.6.0.{#PON}.{#ID}'
+              key: 'TX[{#PON}{#ID}]'
+              delay: 10m
+              history: 30d
+              trends: 90d
+              value_type: FLOAT
+              application_prototypes:
+                -
+                  name: 'GPON {#PON} - ONU {#ID}'
+            -
+              name: 'UpTime GPON {#PON} ONU {#ID}'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.13464.1.14.2.4.1.1.1.14.0.{#PON}.{#ID}'
+              key: 'UPTime[{#PON}{#ID}]'
+              delay: 2m
+              history: 7d
+              trends: '0'
+              value_type: TEXT
+              application_prototypes:
+                -
+                  name: 'GPON {#PON} - ONU {#ID}'
+        -
+          name: 'Interface Status'
+          type: SNMP_AGENT
+          snmp_oid: 'discovery[{#REDE},1.3.6.1.2.1.31.1.1.1.1,{#VELO},1.3.6.1.2.1.2.2.1.5]'
+          key: PortStatus
+          delay: 1h
+          lifetime: 1d
+          item_prototypes:
+            -
+              name: 'RX Bandwidth {#REDE}'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.2.1.2.2.1.10.{#SNMPINDEX}'
+              key: 'RXBandwidth[{#REDE}]'
+              delay: 30s
+              history: 5d
+              trends: 90d
+              units: bps
+              application_prototypes:
+                -
+                  name: '{#REDE}'
+              preprocessing:
+                -
+                  type: MULTIPLIER
+                  parameters:
+                    - '8'
+                -
+                  type: CHANGE_PER_SECOND
+                  parameters:
+                    - ''
+              trigger_prototypes:
+                -
+                  expression: '{avg(#5)}>(0.7*{#VELO}) and {#VELO}>0'
+                  name: 'High incomming traffic in {#REDE}'
+                  priority: AVERAGE
+                  manual_close: 'YES'
+            -
+              name: 'Status {#REDE}'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.2.1.2.2.1.8.{#SNMPINDEX}'
+              key: 'Status[{#REDE}]'
+              delay: 30s
+              history: 5d
+              trends: 90d
+              application_prototypes:
+                -
+                  name: '{#REDE}'
+              trigger_prototypes:
+                -
+                  expression: '{change()}=1'
+                  recovery_mode: RECOVERY_EXPRESSION
+                  recovery_expression: '{last()}=1'
+                  name: 'Port {#REDE} down'
+                  priority: HIGH
+                  manual_close: 'YES'
+            -
+              name: 'TX Bandwidth {#REDE}'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.2.1.2.2.1.16.{#SNMPINDEX}'
+              key: 'TXBandwidth[{#REDE}]'
+              delay: 30s
+              history: 5d
+              trends: 90d
+              units: bps
+              application_prototypes:
+                -
+                  name: '{#REDE}'
+              preprocessing:
+                -
+                  type: MULTIPLIER
+                  parameters:
+                    - '8'
+                -
+                  type: CHANGE_PER_SECOND
+                  parameters:
+                    - ''
+              trigger_prototypes:
+                -
+                  expression: '{avg(#5)}> (0.7*{#VELO}) and {#VELO}>0'
+                  name: 'High outgoing traffic in {#REDE}'
+                  priority: AVERAGE
+                  manual_close: 'YES'
+          graph_prototypes:
+            -
+              name: 'Traffic Load {#REDE}'
+              graph_items:
+                -
+                  sortorder: '1'
+                  color: 1A7C11
+                  item:
+                    host: G16_SNMP
+                    key: 'RXBandwidth[{#REDE}]'
+                -
+                  sortorder: '2'
+                  color: F63100
+                  item:
+                    host: G16_SNMP
+                    key: 'TXBandwidth[{#REDE}]'
+      macros:
+        -
+          macro: '{$CPU_BUSY}'
+          value: '70'
+        -
+          macro: '{$HIGH_TEMP}'
+          value: '70'
+        -
+          macro: '{$OUT_MEMORY}'
+          value: '95'
+      dashboards:
+        -
+          name: 'Hardware Status'
+          widgets:
+            -
+              type: GRAPH_CLASSIC
+              width: '24'
+              height: '5'
+              fields:
+                -
+                  type: INTEGER
+                  name: source_type
+                  value: '0'
+                -
+                  type: GRAPH
+                  name: graphid
+                  value:
+                    name: 'Hardware Load'
+                    host: G16_SNMP
+            -
+              type: GRAPH_CLASSIC
+              'y': '5'
+              width: '24'
+              height: '5'
+              fields:
+                -
+                  type: INTEGER
+                  name: source_type
+                  value: '0'
+                -
+                  type: GRAPH
+                  name: graphid
+                  value:
+                    name: 'Chipset Temp'
+                    host: G16_SNMP
+  triggers:
+    -
+      expression: '{G16_SNMP:GPONChipsetTemp.min(15m)}>{$HIGH_TEMP} or {G16_SNMP:SwitchChipsetTemp.min(15m)}>{$HIGH_TEMP}'
+      name: 'High temperature'
+      priority: DISASTER
+      manual_close: 'YES'
+  graphs:
+    -
+      name: 'Chipset Temp'
+      show_triggers: 'NO'
+      graph_items:
+        -
+          sortorder: '1'
+          color: 1A7C11
+          item:
+            host: G16_SNMP
+            key: GPONChipsetTemp
+        -
+          sortorder: '2'
+          color: F63100
+          item:
+            host: G16_SNMP
+            key: SwitchChipsetTemp
+    -
+      name: 'Hardware Load'
+      show_triggers: 'NO'
+      ymin_type_1: FIXED
+      ymax_type_1: FIXED
+      graph_items:
+        -
+          sortorder: '1'
+          color: 1A7C11
+          item:
+            host: G16_SNMP
+            key: CPULoad
+        -
+          sortorder: '2'
+          color: F63100
+          item:
+            host: G16_SNMP
+            key: MemoryLoad
